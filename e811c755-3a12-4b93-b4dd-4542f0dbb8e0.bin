@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Расписание</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--tx:#1b1d29;--mut:#6b7080;--ac:#3b6cf6;--ln:#e3e6ef;--ok:#e8f7ee;--br:#fff4e0;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12141c;--card:#1c1f2b;--tx:#eceef6;--mut:#9aa0b5;--ac:#7b9bff;--ln:#2b2f40;--ok:#173326;--br:#3a2f17;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12141c;--card:#1c1f2b;--tx:#eceef6;--mut:#9aa0b5;--ac:#7b9bff;--ln:#2b2f40;--ok:#173326;--br:#3a2f17;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:14px;max-width:640px;margin-inline:auto}
+h1{font-size:22px;margin:6px 0 12px}h2{font-size:17px;margin:0 0 8px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:14px;margin-bottom:12px}
+textarea{width:100%;min-height:180px;border:1px solid var(--ln);border-radius:10px;padding:10px;background:var(--bg);color:var(--tx);font:14px/1.4 ui-monospace,Menlo,monospace}
+button{background:var(--ac);color:#fff;border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:600;margin:8px 8px 0 0}
+button.sec{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+.now{font-size:18px;font-weight:600}.mut{color:var(--mut);font-size:14px}
+.st{border-radius:10px;padding:10px;margin-top:8px}.les{background:var(--ok)}.brk{background:var(--br)}
+.row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--ln)}
+.row:last-child{border:0}.brkrow{color:var(--mut);font-size:14px;padding:4px 0 4px 12px}
+.wrap{overflow-x:auto}.msg{font-size:14px;padding:6px 0;border-bottom:1px dashed var(--ln)}
+#toast{position:fixed;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top,0px));background:var(--ac);color:#fff;border-radius:12px;padding:12px;display:none;z-index:9}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<h1>📚 Расписание</h1>
+
+<div class="card"><h2>Сейчас</h2><div id="now" class="mut">Расписание пока не добавлено</div></div>
+
+<div class="card">
+<h2>Вставь расписание</h2>
+<div class="mut">Пиши по дням. В каждой строке: время, предмет, кабинет. Номер урока и тире можно не писать.</div>
+<textarea id="src" placeholder="Понедельник
+1. 8:30-9:15 Математика каб. 205
+2. 9:25-10:10 Физика каб. 301
+
+Вторник
+8:30-9:15 История 114"></textarea>
+<button id="go">Разобрать</button>
+<button class="sec" id="ex">Вставить пример</button>
+<button class="sec" id="perm">Включить уведомления</button>
+<button class="sec" id="test">Тест уведомления</button>
+</div>
+
+<div class="card"><h2>Как приложение поняло</h2><div id="out" class="mut">Пока пусто</div></div>
+<div class="card"><h2>Уведомления на сегодня</h2><div id="msgs" class="mut">Пока пусто</div></div>
+
+<script>
+const DN=['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+const AB={вс:0,пн:1,вт:2,ср:3,чт:4,пт:5,сб:6};
+const FULL={воскресенье:0,понедельник:1,вторник:2,среда:3,четверг:4,пятница:5,суббота:6};
+const TIME=/(\d{1,2})[:.](\d{2})\s*[-–—]\s*(\d{1,2})[:.](\d{2})/;
+const ROOM=/(?:каб(?:инет)?\.?|ауд(?:итория)?\.?|к\.)\s*([\wа-яё\-\/]+)/i;
+let sched={};
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const fmt=m=>pad(Math.floor(m/60))+':'+pad(m%60);
+
+function dayOf(l){const s=l.toLowerCase().replace(/[:.\s]+$/,'');
+ if(s in FULL)return FULL[s]; if(s in AB)return AB[s]; return null;}
+
+function parse(text){
+ const d={};let cur=null;
+ for(const raw of text.split('\n')){
+  const l=raw.trim(); if(!l)continue;
+  const dd=dayOf(l); if(dd!==null){cur=dd;d[cur]=d[cur]||[];continue;}
+  const m=l.match(TIME); if(!m||cur===null)continue;
+  let rest=l.replace(m[0],' ');
+  let room='';const rm=rest.match(ROOM);
+  if(rm){room=rm[1];rest=rest.replace(rm[0],' ');}
+  rest=rest.replace(/^\s*\d+\s*[.)]\s*/,'').replace(/[,;|()—–-]+/g,' ').replace(/\s+/g,' ').trim();
+  if(!room){const r2=rest.match(/^(.*\D)\s+(\d{2,3}[а-яa-z]?)$/i);if(r2){rest=r2[1].trim();room=r2[2];}}
+  d[cur].push({s:+m[1]*60+ +m[2],e:+m[3]*60+ +m[4],name:rest||'Урок',room});
+ }
+ for(const k in d)d[k].sort((a,b)=>a.s-b.s);
+ return d;
+}
+
+function events(day){
+ const L=sched[day]||[],ev=[];
+ L.forEach((x,i)=>{
+  const rm=x.room?`, каб. ${x.room}`:'';
+  ev.push({t:x.s,title:'Урок начался',body:`Сейчас: ${x.name}${rm}. Закончится в ${fmt(x.e)} (${x.e-x.s} мин).`});
+  const n=L[i+1];
+  if(n){const nr=n.room?`, каб. ${n.room}`:'';
+   ev.push({t:x.e,title:'Перемена',body:`Перемена ${n.s-x.e} мин, до ${fmt(n.s)}. Дальше: ${n.name}${nr}, ${fmt(n.s)}–${fmt(n.e)} (${n.e-n.s} мин).`});}
+  else ev.push({t:x.e,title:'Уроки закончились',body:'На сегодня уроков больше нет. 🎉'});
+ });
+ return ev;
+}
+
+function render(){
+ const keys=Object.keys(sched).map(Number).sort((a,b)=>((a+6)%7)-((b+6)%7));
+ if(!keys.length){$('out').textContent='Не нашёл уроков. Проверь, что есть название дня и время вида 8:30-9:15.';return;}
+ $('out').innerHTML=keys.map(k=>{
+  const L=sched[k];
+  return `<h3 style="margin:10px 0 4px">${DN[k]}</h3>`+L.map((x,i)=>{
+   const b=L[i+1]?`<div class="brkrow">перемена ${L[i+1].s-x.e} мин</div>`:'';
+   return `<div class="row"><span>${x.name}${x.room?' · каб. '+x.room:''}</span><span>${fmt(x.s)}–${fmt(x.e)} (${x.e-x.s} мин)</span></div>${b}`;
+  }).join('');
+ }).join('');
+ const td=new Date().getDay();
+ const ev=events(td);
+ $('msgs').innerHTML=ev.length?ev.map(e=>`<div class="msg"><b>${fmt(e.t)}</b> — ${e.body}</div>`).join(''):'Сегодня уроков нет.';
+}
+
+function status(){
+ const d=new Date(),day=d.getDay(),m=d.getHours()*60+d.getMinutes(),L=sched[day]||[];
+ if(!Object.keys(sched).length)return;
+ let h='';
+ if(!L.length)h='<div class="st brk">Сегодня уроков нет 🙂</div>';
+ else{
+  const cur=L.find(x=>m>=x.s&&m<x.e);
+  const nxt=L.find(x=>x.s>m);
+  if(cur)h=`<div class="st les"><div class="now">${cur.name}${cur.room?' · каб. '+cur.room:''}</div>Закончится в ${fmt(cur.e)} — осталось ${cur.e-m} мин</div>`;
+  else if(nxt){const prev=L.filter(x=>x.e<=m).pop();
+   h=`<div class="st brk"><div class="now">${prev?'Перемена':'Скоро начало'}</div>Дальше: ${nxt.name}${nxt.room?', каб. '+nxt.room:''}, ${fmt(nxt.s)}–${fmt(nxt.e)}. Через ${nxt.s-m} мин.</div>`;}
+  else h='<div class="st brk">Уроки на сегодня закончились 🎉</div>';
+ }
+ $('now').innerHTML=h;
+}
+
+function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',6000);}
+function notify(title,body){
+ toast(title+': '+body);
+ try{if('Notification' in window&&Notification.permission==='granted')new Notification(title,{body});}catch(e){}
+}
+
+// Запуск «внутри APK»: плагин Capacitor ставит повторяющиеся уведомления на телефон
+async function scheduleNative(){
+ const LN=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.LocalNotifications;
+ if(!LN)return false;
+ try{
+  const pr=await LN.requestPermissions();
+  if(pr.display!=='granted'){toast('Разреши уведомления в настройках телефона');return false;}
+  await LN.createChannel({id:'lessons',name:'Уроки',description:'Начало и конец уроков',importance:5,visibility:1,vibration:true});
+  const p=await LN.getPending(); if(p.notifications.length)await LN.cancel(p);
+  let id=1;const list=[];
+  for(const k in sched)for(const e of events(+k))
+   list.push({id:id++,title:e.title,body:e.body,largeBody:e.body,channelId:'lessons',schedule:{on:{weekday:+k+1,hour:Math.floor(e.t/60),minute:e.t%60},allowWhileIdle:true}});
+  if(list.length)await LN.schedule({notifications:list});
+  return true;
+ }catch(e){toast('Не удалось поставить уведомления');return false;}
+}
+
+function save(){try{localStorage.setItem('sched_text',$('src').value);}catch(e){}}
+async function apply(){
+ sched=parse($('src').value);save();render();status();
+ if(await scheduleNative())toast('Уведомления поставлены на всю неделю ✅');
+}
+
+let fired='';
+setInterval(()=>{
+ status();
+ const d=new Date(),m=d.getHours()*60+d.getMinutes(),key=d.getDay()+'-'+m;
+ const e=events(d.getDay()).find(x=>x.t===m);
+ if(e&&fired!==key&&!(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.LocalNotifications)){fired=key;notify(e.title,e.body);}
+},15000);
+
+$('go').onclick=apply;
+$('ex').onclick=()=>{$('src').value=`Понедельник
+1. 8:30-9:15 Математика каб. 205
+2. 9:25-10:10 Физика каб. 301
+3. 10:30-11:15 Русский язык каб. 112
+
+Вторник
+1. 8:30-9:15 История каб. 114
+2. 9:25-10:10 Английский каб. 210`;apply();};
+$('perm').onclick=async()=>{try{const r=await Notification.requestPermission();toast(r==='granted'?'Уведомления включены':'Уведомления не разрешены');}catch(e){toast('Здесь уведомления недоступны');}};
+$('test').onclick=()=>{const ev=events(new Date().getDay());const e=ev[0]||events(+Object.keys(sched)[0]||1)[0];
+ if(e)notify(e.title,e.body);else toast('Сначала добавь расписание');};
+
+try{const t=localStorage.getItem('sched_text');if(t){$('src').value=t;sched=parse(t);render();status();}}catch(e){}
+</script>
+</body>
+</html>
