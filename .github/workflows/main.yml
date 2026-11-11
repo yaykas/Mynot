@@ -16,6 +16,13 @@ jobs:
           java-version: 17
       - run: mkdir www && cp index.html www/
       - run: npm install
+      - name: Prepare photo scanner
+        run: |
+          mkdir -p www/tesseract
+          cp node_modules/tesseract.js/dist/tesseract.min.js node_modules/tesseract.js/dist/worker.min.js www/tesseract/
+          cp node_modules/tesseract.js-core/tesseract-core* www/tesseract/
+          curl -fL -o www/tesseract/rus.traineddata https://github.com/tesseract-ocr/tessdata_fast/raw/main/rus.traineddata
+          curl -fL -o www/tesseract/eng.traineddata https://github.com/tesseract-ocr/tessdata_fast/raw/main/eng.traineddata
       - run: npx cap add android
       - run: npx cap sync android
       - name: Allow exact alarms
@@ -24,5 +31,5 @@ jobs:
         run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: raspisanie-apk
+          name: cadence-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
