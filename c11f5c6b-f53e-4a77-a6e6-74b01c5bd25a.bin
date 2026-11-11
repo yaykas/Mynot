@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cadence</title>
+<script src="tesseract/tesseract.min.js" onerror="void 0"></script>
+<style>
+:root{--bg:#0e0e10;--card:#1a1a1d;--card2:#242428;--tx:#f5f5f6;--mut:#9b9ba4;--ln:#2b2b30;--bar:#3b3b42;--ac:#ff5500;--ac2:#ff8a3d;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);color-scheme:dark}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f4f4f6;--card:#fff;--card2:#efeff2;--tx:#111114;--mut:#6c6c76;--ln:#e4e4e9;--bar:#cfcfd8;color-scheme:light}}
+:root[data-theme="light"]{--bg:#f4f4f6;--card:#fff;--card2:#efeff2;--tx:#111114;--mut:#6c6c76;--ln:#e4e4e9;--bar:#cfcfd8;color-scheme:light}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;max-width:560px;margin-inline:auto;padding:0 16px 110px}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 0 10px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px;letter-spacing:-.5px}
+.mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--ac),var(--ac2));display:grid;place-items:center}
+.badge{font-size:11px;color:var(--mut);border:1px solid var(--ln);border-radius:20px;padding:3px 9px}
+.hero{background:linear-gradient(160deg,#ff5500 0%,#c4320a 55%,#3a1a14 100%);border-radius:22px;padding:18px;color:#fff;box-shadow:0 10px 30px rgba(255,85,0,.25)}
+.lab{font-size:12px;font-weight:700;letter-spacing:1.6px;opacity:.85;display:flex;align-items:center;gap:7px}
+.dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:p 1.6s infinite}
+@keyframes p{50%{opacity:.25}}
+.ttl{font-size:27px;font-weight:800;line-height:1.15;margin:8px 0 4px;letter-spacing:-.4px}
+.sub{opacity:.9;font-size:15px}
+.wave{display:flex;align-items:center;gap:2px;height:56px;margin:16px 0 8px}
+.wave i{flex:1;border-radius:2px;background:rgba(255,255,255,.3);min-width:2px}
+.wave i.on{background:#fff}
+.meta{display:flex;justify-content:space-between;font-size:13px;opacity:.9;font-variant-numeric:tabular-nums}
+.next{margin-top:12px;background:rgba(0,0,0,.25);border-radius:12px;padding:10px 12px;font-size:14px}
+.chips{display:flex;gap:8px;margin:18px 0 10px;overflow-x:auto;scrollbar-width:none}
+.chip{flex:1;min-width:46px;text-align:center;padding:9px 0;border-radius:14px;background:var(--card);color:var(--mut);font-weight:700;font-size:14px;border:0;position:relative}
+.chip.sel{background:var(--ac);color:#fff}
+.chip.td::after{content:"";position:absolute;bottom:4px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:currentColor}
+.list{background:var(--card);border-radius:18px;overflow:hidden}
+.tr{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--ln);position:relative}
+.tr.cur{background:var(--card2)}
+.tr.cur::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--ac)}
+.num{width:30px;height:30px;border-radius:9px;background:var(--card2);display:grid;place-items:center;font-weight:800;font-size:14px;color:var(--mut);flex:none}
+.cur .num{background:var(--ac);color:#fff}
+.nm{flex:1;min-width:0}.nm b{display:block;font-size:16px}.nm span{color:var(--mut);font-size:13px}
+.tm{text-align:right;font-variant-numeric:tabular-nums;font-size:14px}.tm span{display:block;color:var(--mut);font-size:12px}
+.gap{padding:5px 14px 5px 56px;font-size:12px;color:var(--mut);background:var(--bg);opacity:.9}
+.empty{padding:26px 16px;text-align:center;color:var(--mut)}
+select{width:100%;margin-top:10px;padding:12px;border-radius:14px;border:1px solid var(--ln);background:var(--card);color:var(--tx);font:inherit}
+textarea{width:100%;min-height:230px;border:1px solid var(--ln);border-radius:14px;padding:12px;background:var(--card);color:var(--tx);font:14px/1.45 ui-monospace,Menlo,monospace;resize:vertical}
+.btn{background:var(--ac);color:#fff;border:0;border-radius:24px;padding:12px 20px;font:inherit;font-weight:700;margin:10px 8px 0 0}
+.btn.sec{background:var(--card2);color:var(--tx)}
+h2{font-size:18px;margin:18px 0 8px}.hint{color:var(--mut);font-size:14px}
+.msg{font-size:14px;padding:9px 0;border-bottom:1px solid var(--ln)}.msg b{color:var(--ac)}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;background:var(--card);border-top:1px solid var(--ln);padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));z-index:5}
+nav button{flex:1;max-width:280px;background:none;border:0;color:var(--mut);font:600 12px system-ui;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button.on{color:var(--ac)}
+#toast{position:fixed;left:14px;right:14px;top:calc(12px + env(safe-area-inset-top,0px));background:var(--ac);color:#fff;border-radius:14px;padding:12px 14px;display:none;z-index:9;font-weight:600}
+.page{display:none}.page.on{display:block}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<header>
+ <div class="logo"><div class="mark"><svg width="20" height="20" viewBox="0 0 20 20" fill="#fff"><rect x="1" y="8" width="2.6" height="4" rx="1.3"/><rect x="5.5" y="4" width="2.6" height="12" rx="1.3"/><rect x="10" y="1" width="2.6" height="18" rx="1.3"/><rect x="14.5" y="6" width="2.6" height="8" rx="1.3"/></svg></div>Cadence</div>
+ <span class="badge" id="demo" style="display:none">demo · 14:20</span>
+</header>
+
+<div id="p1" class="page on">
+ <div class="hero" id="hero"></div>
+ <div class="chips" id="chips"></div>
+ <div class="list" id="list"></div>
+</div>
+
+<div id="p2" class="page">
+ <h2>Scan from photo</h2>
+ <div class="hint">Pick the day, then choose a photo or screenshot of it. A clear screenshot from the school app works best.</div>
+ <select id="scanDay"><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="0">Sunday</option></select>
+ <label class="btn" for="photo">Scan photo</label>
+ <input type="file" id="photo" accept="image/*" hidden>
+ <h2>Your schedule (text)</h2>
+ <div class="hint">The scan fills this box. Check it, fix mistakes, then tap Parse. You can also type or paste: day name, then time, subject, room.</div>
+ <textarea id="src" placeholder="Wednesday
+13:15-13:55 English room 212
+14:00-14:40 Math room 311"></textarea>
+ <button class="btn" id="go">Parse</button>
+ <button class="btn sec" id="ex">Example</button>
+ <button class="btn sec" id="perm">Enable notifications</button>
+ <button class="btn sec" id="test">Test</button>
+ <h2>Notifications for selected day</h2>
+ <div id="msgs" class="hint">Nothing yet</div>
+</div>
+
+<nav>
+ <button class="on" id="t1"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Today</button>
+ <button id="t2"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg>Schedule</button>
+</nav>
+
+<script>
+const DN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const SH=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const ORDER=[1,2,3,4,5,6,0];
+const AB={вс:0,пн:1,вт:2,ср:3,чт:4,пт:5,сб:6,sun:0,mon:1,tue:2,tues:2,wed:3,thu:4,thur:4,fri:5,sat:6};
+const FULL={воскресенье:0,понедельник:1,вторник:2,среда:3,четверг:4,пятница:5,суббота:6,sunday:0,monday:1,tuesday:2,wednesday:3,thursday:4,friday:5,saturday:6};
+const SUBJ=[[/иностранн|английск|english/i,'English'],[/математик|math/i,'Math'],[/алгебр/i,'Algebra'],[/геометр/i,'Geometry'],[/русск/i,'Russian'],[/литератур/i,'Literature'],[/музык/i,'Music'],[/физкульт|физическая культур/i,'PE'],[/безопасност|обж/i,'Life safety (OBZh)'],[/физик/i,'Physics'],[/хими/i,'Chemistry'],[/биолог/i,'Biology'],[/истори/i,'History'],[/географ/i,'Geography'],[/информат/i,'Computer science'],[/обществозн/i,'Social studies'],[/технолог|труд/i,'Technology'],[/изо|изобразит/i,'Art'],[/вероятност|статистик/i,'Probability & statistics']];
+const tr=n=>{for(const[r,e]of SUBJ)if(r.test(n))return e;return n;};
+const TIME=/(\d{1,2})[:.](\d{2})\s*[-–—]\s*(\d{1,2})[:.](\d{2})/;
+const ROOM=/(?:каб(?:инет)?\.?|ауд(?:итория)?\.?|к\.|room|rm\.?)\s*([\wа-яё\-\/]+)/i;
+const EXAMPLE=`Среда
+13:15-13:55 Иностранный язык (английский) 212
+14:00-14:40 Математика 311
+14:55-15:35 Русский язык 312
+15:45-16:25 Литература 312
+16:45-17:25 Музыка 105
+17:35-18:15 Физкультура 218
+18:20-19:00 Основы безопасности 209`;
+const NATIVE=!!(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.LocalNotifications);
+let sched={},DEMO=false,T0=Date.now(),selDay=null;
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const fmt=m=>pad(Math.floor(m/60))+':'+pad(Math.floor(m)%60);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+function getNow(){
+ if(DEMO)return{day:3,m:860+(Date.now()-T0)/60000};
+ const d=new Date();return{day:d.getDay(),m:d.getHours()*60+d.getMinutes()+d.getSeconds()/60};
+}
+function dayOf(l){const s=l.toLowerCase().replace(/[:.\s]+$/,'');if(s in FULL)return FULL[s];if(s in AB)return AB[s];return null;}
+
+function parse(text){
+ const d={};let cur=null;
+ for(const raw of text.split('\n')){
+  const l=raw.trim();if(!l)continue;
+  const dd=dayOf(l);if(dd!==null){cur=dd;d[cur]=d[cur]||[];continue;}
+  const m=l.match(TIME);if(!m||cur===null)continue;
+  let rest=l.replace(m[0],' ');let room='';const rm=rest.match(ROOM);
+  if(rm){room=rm[1];rest=rest.replace(rm[0],' ');}
+  rest=rest.replace(/^\s*\d+\s*[.)]\s*/,'').replace(/[,;|—–-]+/g,' ').replace(/\s+/g,' ').trim();
+  if(!room){const r2=rest.match(/^(.*\D)\s+(\d{2,3}[а-яa-z]?)$/i);if(r2){rest=r2[1].trim();room=r2[2];}}
+  d[cur].push({s:+m[1]*60+ +m[2],e:+m[3]*60+ +m[4],name:tr(rest)||'Lesson',room});
+ }
+ for(const k in d)d[k].sort((a,b)=>a.s-b.s);
+ return d;
+}
+
+function events(day){
+ const L=sched[day]||[],ev=[];
+ L.forEach((x,i)=>{
+  const rm=x.room?`, room ${x.room}`:'';
+  ev.push({t:x.s,title:'Lesson started',body:`Now: ${x.name}${rm}. Ends at ${fmt(x.e)} (${x.e-x.s} min).`});
+  const n=L[i+1];
+  if(n){const nr=n.room?`, room ${n.room}`:'';
+   ev.push({t:x.e,title:'Break',body:`Break ${n.s-x.e} min, until ${fmt(n.s)}. Next: ${n.name}${nr}, ${fmt(n.s)}–${fmt(n.e)} (${n.e-n.s} min).`});}
+  else ev.push({t:x.e,title:'Lessons finished',body:'No more lessons today.'});
+ });
+ return ev;
+}
+
+function wave(seed,prog){
+ let h=0;for(const c of seed)h=(h*31+c.charCodeAt(0))>>>0;
+ let out='';const N=52;
+ for(let i=0;i<N;i++){
+  h=(h*1664525+1013904223)>>>0;
+  const v=.25+.75*Math.abs(Math.sin(i*.45+(h%100)/40))*(.55+((h>>8)%45)/100);
+  out+=`<i class="${i/N<prog?'on':''}" style="height:${Math.round(Math.min(1,v)*100)}%"></i>`;
+ }
+ return `<div class="wave">${out}</div>`;
+}
+
+function hero(){
+ const el=$('hero');
+ if(!Object.keys(sched).length){
+  el.innerHTML=`<div class="lab">CADENCE</div><div class="ttl">Add your schedule</div><div class="sub">Open the Schedule tab and scan a photo or paste text.</div>`;return;}
+ const n=getNow(),L=sched[n.day]||[],m=n.m;
+ if(!L.length){el.innerHTML=`<div class="lab">TODAY</div><div class="ttl">No lessons</div><div class="sub">Enjoy your day 🙂</div>`;return;}
+ const cur=L.find(x=>m>=x.s&&m<x.e),nxt=L.find(x=>x.s>m),prev=L.filter(x=>x.e<=m).pop();
+ let lab,t,sub,prog,l,r,extra='';
+ const rm=x=>x.room?'room '+esc(x.room):'';
+ if(cur){
+  const i=L.indexOf(cur),nx=L[i+1];
+  lab='NOW IN CLASS';t=esc(cur.name);sub=(cur.room?rm(cur)+' · ':'')+fmt(cur.s)+'–'+fmt(cur.e);
+  prog=(m-cur.s)/(cur.e-cur.s);l=fmt(m)+' · '+Math.floor(m-cur.s)+' min in';r=Math.ceil(cur.e-m)+' min left';
+  extra=nx?`After class: ${nx.s-cur.e} min break, then ${esc(nx.name)}${nx.room?', '+rm(nx):''}`:'This is the last lesson today';
+ }else if(nxt&&prev){
+  lab='BREAK';t='Until '+fmt(nxt.s);sub='Next: '+esc(nxt.name)+(nxt.room?', '+rm(nxt):'');
+  prog=(m-prev.e)/(nxt.s-prev.e);l=(nxt.s-prev.e)+' min break';r=Math.ceil(nxt.s-m)+' min left';
+  extra=`Lesson: ${fmt(nxt.s)}–${fmt(nxt.e)} (${nxt.e-nxt.s} min)`;
+ }else if(nxt){
+  lab='STARTING SOON';t=esc(nxt.name);sub=(nxt.room?rm(nxt)+' · ':'')+fmt(nxt.s)+'–'+fmt(nxt.e);
+  prog=0;l='starts at '+fmt(nxt.s);r='in '+Math.ceil(nxt.s-m)+' min';
+ }else{
+  lab='DONE';t='Lessons finished';sub='Have a good evening';prog=1;l='';r='';
+ }
+ el.innerHTML=`<div class="lab"><span class="dot"></span>${lab}</div><div class="ttl">${t}</div><div class="sub">${sub}</div>${wave(t,prog)}<div class="meta"><span>${l}</span><span>${r}</span></div>${extra?`<div class="next">${extra}</div>`:''}`;
+}
+
+function days(){
+ const td=getNow().day;
+ $('chips').innerHTML=ORDER.map(d=>`<button class="chip${d===selDay?' sel':''}${d===td?' td':''}" data-d="${d}">${SH[d]}</button>`).join('');
+ $('chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{selDay=+b.dataset.d;days();list();});
+}
+function list(){
+ const L=sched[selDay]||[],n=getNow();
+ if(!L.length){$('list').innerHTML=`<div class="empty">${Object.keys(sched).length?'No lessons this day':'Schedule is empty'}</div>`;}
+ else $('list').innerHTML=L.map((x,i)=>{
+  const c=selDay===n.day&&n.m>=x.s&&n.m<x.e;
+  const g=L[i+1]?`<div class="gap">${L[i+1].s-x.e} min break</div>`:'';
+  return `<div class="tr${c?' cur':''}"><div class="num">${i+1}</div><div class="nm"><b>${esc(x.name)}</b><span>${x.room?'room '+esc(x.room):'no room'}</span></div><div class="tm">${fmt(x.s)}–${fmt(x.e)}<span>${x.e-x.s} min</span></div></div>${g}`;
+ }).join('');
+ const ev=events(selDay);
+ $('msgs').innerHTML=ev.length?ev.map(e=>`<div class="msg"><b>${fmt(e.t)}</b> — ${esc(e.body)}</div>`).join(''):'No notifications this day.';
+}
+function renderAll(){hero();days();list();}
+
+function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',6000);}
+function notify(title,body){toast(title+': '+body);try{if('Notification' in window&&Notification.permission==='granted')new Notification(title,{body});}catch(e){}}
+
+async function scheduleNative(){
+ const LN=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.LocalNotifications;
+ if(!LN)return false;
+ try{
+  const pr=await LN.requestPermissions();
+  if(pr.display!=='granted'){toast('Allow notifications in phone settings');return false;}
+  await LN.createChannel({id:'lessons',name:'Lessons',description:'Lesson start and end',importance:5,visibility:1,vibration:true});
+  const p=await LN.getPending();if(p.notifications.length)await LN.cancel(p);
+  let id=1;const list=[];
+  for(const k in sched)for(const e of events(+k))
+   list.push({id:id++,title:e.title,body:e.body,largeBody:e.body,channelId:'lessons',schedule:{on:{weekday:+k+1,hour:Math.floor(e.t/60),minute:e.t%60},allowWhileIdle:true}});
+  if(list.length)await LN.schedule({notifications:list});
+  return true;
+ }catch(e){toast('Could not schedule notifications');return false;}
+}
+
+function show(n){
+ $('p1').classList.toggle('on',n===1);$('p2').classList.toggle('on',n===2);
+ $('t1').classList.toggle('on',n===1);$('t2').classList.toggle('on',n===2);
+}
+function save(){try{localStorage.setItem('sched_text',$('src').value);}catch(e){}}
+async function apply(){
+ sched=parse($('src').value);save();DEMO=false;$('demo').style.display='none';
+ const k=Object.keys(sched);
+ if(!k.length){toast('No lessons found. Add a day name and times like 8:30-9:15');return;}
+ selDay=getNow().day;if(!sched[selDay])selDay=+k[0];
+ renderAll();show(1);
+ if(await scheduleNative())toast('Notifications scheduled for the whole week ✅');
+}
+
+function setDayBlock(text,day,lines){
+ const blocks=[];let cur=null;
+ for(const raw of text.split('\n')){const l=raw.trim();if(!l)continue;const dd=dayOf(l);
+  if(dd!==null){cur={day:dd,lines:[]};blocks.push(cur);continue;}
+  if(cur)cur.lines.push(l);}
+ const b=blocks.find(x=>x.day===day);
+ if(b)b.lines=lines;else blocks.push({day,lines});
+ return blocks.map(x=>DN[x.day]+'\n'+x.lines.join('\n')).join('\n\n');
+}
+const ISNUM=/^\d{1,3}[а-яa-z]?(\/\d+)?$/i;
+function ocrToLines(text){
+ const rows=text.split('\n').map(s=>s.replace(/(^|\s)Д[3З](?=\s|$)/g,' ').replace(/\s+/g,' ').trim()).filter(Boolean);
+ const out=[];let pend='';
+ for(let i=0;i<rows.length;i++){
+  const l=rows[i],m=l.match(TIME);
+  if(!m){if(!ISNUM.test(l))pend=l;continue;}
+  let rest=l.replace(m[0],' ').replace(/[|—–-]+/g,' ').replace(/\s+/g,' ').trim(),room='';
+  if(ISNUM.test(rest)){room=rest;rest='';}
+  const name=rest||pend;
+  if(!room&&rows[i+1]&&ISNUM.test(rows[i+1])){room=rows[i+1];i++;}
+  out.push(`${pad(+m[1])}:${m[2]}-${pad(+m[3])}:${m[4]} ${name} ${room?'room '+room:''}`.trim());
+  pend='';
+ }
+ return out;
+}
+async function prep(file){
+ const bmp=await createImageBitmap(file);
+ const sc=bmp.width<1800?Math.min(2.5,1800/bmp.width):Math.min(1,2400/bmp.width);
+ const c=document.createElement('canvas');c.width=Math.round(bmp.width*sc);c.height=Math.round(bmp.height*sc);
+ const x=c.getContext('2d');x.drawImage(bmp,0,0,c.width,c.height);
+ const im=x.getImageData(0,0,c.width,c.height),d=im.data;let sum=0;
+ for(let i=0;i<d.length;i+=4){const g=.3*d[i]+.59*d[i+1]+.11*d[i+2];d[i]=d[i+1]=d[i+2]=g;sum+=g;}
+ if(sum/(d.length/4)<115)for(let i=0;i<d.length;i+=4){d[i]=d[i+1]=d[i+2]=255-d[i];}
+ x.putImageData(im,0,0);return c;
+}
+async function scanPhoto(file){
+ if(!window.Tesseract){toast('Photo scan works in the installed app only');return;}
+ try{
+  toast('Preparing photo…');
+  const c=await prep(file);
+  const base=new URL('tesseract',location.href).href;
+  const w=await Tesseract.createWorker('rus+eng',1,{workerPath:base+'/worker.min.js',corePath:base,langPath:base,gzip:false,workerBlobURL:false,cacheMethod:'none',
+   logger:m=>{if(m.status==='recognizing text')toast('Reading photo… '+Math.round(m.progress*100)+'%');}});
+  const r=await w.recognize(c);await w.terminate();
+  const lines=ocrToLines(r.data.text);
+  if(!lines.length){toast('No lessons found. Try a clearer screenshot');return;}
+  $('src').value=setDayBlock($('src').value,+$('scanDay').value,lines);
+  toast('Done. Check the text, then tap Parse');
+ }catch(e){toast('Scan failed. Try another photo');}
+}
+
+let fired='';
+setInterval(()=>{
+ hero();list();
+ if(DEMO||NATIVE)return;
+ const n=getNow(),m=Math.floor(n.m),key=n.day+'-'+m;
+ const e=events(n.day).find(x=>x.t===m);
+ if(e&&fired!==key){fired=key;notify(e.title,e.body);}
+},15000);
+
+$('go').onclick=apply;
+$('photo').onchange=e=>{const f=e.target.files[0];if(f)scanPhoto(f);e.target.value='';};
+$('ex').onclick=()=>{$('src').value=EXAMPLE;apply();};
+$('perm').onclick=async()=>{
+ if(NATIVE){await scheduleNative();return;}
+ try{const r=await Notification.requestPermission();toast(r==='granted'?'Notifications enabled':'Notifications not allowed');}catch(e){toast('Notifications are not available here');}
+};
+$('test').onclick=()=>{const ev=events(selDay);const e=ev[0];if(e)notify(e.title,e.body);else toast('Add a schedule first');};
+$('t1').onclick=()=>show(1);$('t2').onclick=()=>show(2);
+
+let saved='';try{saved=localStorage.getItem('sched_text')||'';}catch(e){}
+if(saved){$('src').value=saved;sched=parse(saved);}
+else if(!NATIVE){$('src').value=EXAMPLE;sched=parse(EXAMPLE);DEMO=true;$('demo').style.display='';}
+selDay=getNow().day;if(!sched[selDay]&&Object.keys(sched).length)selDay=+Object.keys(sched)[0];
+$('scanDay').value=String(getNow().day);
+renderAll();
+</script>
+</body>
+</html>
